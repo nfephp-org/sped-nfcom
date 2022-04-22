@@ -1,0 +1,69 @@
+{
+    "name": "nfephp-org/sped-nfcom",
+    "type": "library",
+    "description": "Biblioteca para geração e operação com NFCom (modelo 62)",
+    "keywords": [
+        "nfcom",
+        "sped",
+        "nfephp"
+    ],
+    "homepage": "https://github.com/nfephp-org/sped-nfcom",
+    "license": [
+        "LGPL-3.0-or-later",
+        "GPL-3.0-or-later",
+        "MIT"
+    ],
+    "authors": [
+        {
+            "name": "Roberto L. Machado",
+            "email": "linux.rlm@gmail.com.br",
+            "homepage": "https://www.nfephp.com.br/",
+            "role": "Developer"
+        },
+        {
+            "name": "Comunidade NFePHP",
+            "homepage": "https://github.com/nfephp-org/sped-nfe/graphs/contributors"
+        }
+    ],
+    "require": {
+        "php": ">= 7.4",
+        "nfephp-org/sped-common": "^5.1.0",
+        "nfephp-org/sped-gtin": "^1.1.0",
+        "justinrainbow/json-schema": "^5.2",
+        "ext-zlib": "*",
+        "ext-dom": "*",
+        "ext-openssl": "*",
+        "ext-soap": "*",
+        "ext-json": "*",
+        "ext-simplexml": "*",
+        "ext-libxml": "*"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.6",
+        "phpunit/phpunit": "^9.3",
+        "phpstan/phpstan": "^1.4",
+        "phpcompatibility/php-compatibility": "^9.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "NFePHP\\NFCom\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NFePHP\\NFCom\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit -c phpunit.xml.dist",
+        "phpcbf": "vendor/bin/phpcbf src/",
+        "phpcs": "vendor/bin/phpcs src/",
+        "stan": "vendor/bin/phpstan analyse src/"
+    },
+    "extra": {
+        "branch-alias": {
+            "v1.0": "1.0-dev"
+        }
+    },
+    "minimum-stability": "stable"
+}
