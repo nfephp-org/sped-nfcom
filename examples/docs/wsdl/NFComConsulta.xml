@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComConsulta" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComConsulta" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComConsulta">
+      <s:element name="nfcomDadosMsg">
+        <s:complexType mixed="true">
+          <s:sequence>
+            <s:any />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="nfcomResultMsg" nillable="true">
+        <s:complexType mixed="true">
+          <s:sequence>
+            <s:any />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="nfcomConsultaNFSoap12In">
+    <wsdl:part name="nfcomDadosMsg" element="tns:nfcomDadosMsg" />
+  </wsdl:message>
+  <wsdl:message name="nfcomConsultaNFSoap12Out">
+    <wsdl:part name="nfcomConsultaNFResult" element="tns:nfcomResultMsg" />
+  </wsdl:message>
+  <wsdl:portType name="NFComConsultaSoap12">
+    <wsdl:operation name="nfcomConsultaNF">
+      <wsdl:input message="tns:nfcomConsultaNFSoap12In" />
+      <wsdl:output message="tns:nfcomConsultaNFSoap12Out" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="NFComConsultaSoap12" type="tns:NFComConsultaSoap12">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="nfcomConsultaNF">
+      <soap12:operation soapAction="http://www.portalfiscal.inf.br/nfcom/wsdl/NFComConsulta/nfcomConsultaNF" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="NFComConsulta">
+    <wsdl:port name="NFComConsultaSoap12" binding="tns:NFComConsultaSoap12">
+      <soap12:address location="https://nfcom-homologacao.svrs.rs.gov.br/WS/NFComConsulta/NFComConsulta.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

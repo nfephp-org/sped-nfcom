@@ -1,0 +1,5 @@
+<consSitNFCom versao="string" xmlns="http://www.portalfiscal.inf.br/nfcom">
+  <tpAmb>2</tpAmb>
+  <xServ>string</xServ>
+  <chNFCom>string</chNFCom>
+</consSitNFCom>

@@ -1,0 +1,39 @@
+<eventoNFCom versao="string" xmlns="http://www.portalfiscal.inf.br/nfcom" xmlns:xd="http://www.w3.org/2000/09/xmldsig#">
+  <infEvento Id="string">
+    <cOrgao>27</cOrgao>
+    <tpAmb>1</tpAmb>
+    <CNPJ>string</CNPJ>
+    <chNFCom>string</chNFCom>
+    <dhEvento>string</dhEvento>
+    <tpEvento>string</tpEvento>
+    <nSeqEvento>string</nSeqEvento>
+    <detEvento versaoEvento="string">
+      <!--You may enter ANY elements at this point-->
+      <AnyElement/>
+    </detEvento>
+  </infEvento>
+  <xd:Signature Id="string">
+    <xd:SignedInfo Id="string">
+      <xd:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+      <xd:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+      <xd:Reference Id="string" URI="http://www.your.org/aeoliam/quae" Type="http://www.corp.org/temperat/per">
+        <xd:Transforms>
+          <xd:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature">
+            <xd:XPath>string</xd:XPath>
+          </xd:Transform>
+          <xd:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature">
+            <xd:XPath>string</xd:XPath>
+          </xd:Transform>
+        </xd:Transforms>
+        <xd:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+        <xd:DigestValue>cmVnZW1xdWU=</xd:DigestValue>
+      </xd:Reference>
+    </xd:SignedInfo>
+    <xd:SignatureValue Id="string">bmltYm9ydW0=</xd:SignatureValue>
+    <xd:KeyInfo Id="string">
+      <xd:X509Data>
+        <xd:X509Certificate>ZnJlbXVudA==</xd:X509Certificate>
+      </xd:X509Data>
+    </xd:KeyInfo>
+  </xd:Signature>
+</eventoNFCom>

@@ -1,0 +1,17 @@
+<retConsSitNFCom versao="string" xmlns="http://www.portalfiscal.inf.br/nfcom">
+  <tpAmb>2</tpAmb>
+  <verAplic>string</verAplic>
+  <cStat>string</cStat>
+  <xMotivo>string</xMotivo>
+  <cUF>12</cUF>
+  <!--Optional:-->
+  <protNFCom versao="1.00">
+    <!--You may enter ANY elements at this point-->
+    <AnyElement/>
+  </protNFCom>
+  <!--Zero or more repetitions:-->
+  <procEventoNFCom versao="1.00">
+    <!--You may enter ANY elements at this point-->
+    <AnyElement/>
+  </procEventoNFCom>
+</retConsSitNFCom>
