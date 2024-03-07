@@ -27,6 +27,7 @@ trait TagIde
             'verProc',
             'indPrePago',
             'indCessaoMeiosRede',
+            'indNotaEntrada',
             'dhCont',
             'xJust'
         ];
@@ -153,6 +154,13 @@ trait TagIde
             $std->indCessaoMeiosRede ?? null,
             false,
             $identificador . "Indicador de Sessão de Meios de Rede"
+        );
+        $this->dom->addChild(
+            $ide,
+            "indNotaEntrada",
+            $std->indNotaEntrada ?? null,
+            false,
+            $identificador . "Indicador de nota de entrada<"
         );
         if (!empty($std->dhCont) && !empty($std->xJust)) {
             $this->dom->addChild(
