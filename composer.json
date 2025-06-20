@@ -54,7 +54,6 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit -c phpunit.xml.dist",
         "phpcbf": "vendor/bin/phpcbf src/",
         "phpcs": "vendor/bin/phpcs src/",
         "stan": "vendor/bin/phpstan analyse src/"

@@ -11,7 +11,7 @@ class Aux
      * Formatação numerica condicional
      * @param string|float|int|null $value
      */
-    public static function conditionalNumberFormatting($value = null, int $decimal = 2): ?string
+    public static function conditionalNumberFormatting($value = null, int $decimal = 2)
     {
         if (is_numeric($value)) {
             return number_format($value, $decimal, '.', '');
