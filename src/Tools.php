@@ -21,6 +21,7 @@ use NFePHP\Common\Signer;
 use NFePHP\Common\UFList;
 use NFePHP\NFCom\Common\Tools as ToolsCommon;
 use InvalidArgumentException;
+use NFePHP\NFCom\Exception\RuntimeException;
 
 class Tools extends ToolsCommon
 {
@@ -171,8 +172,14 @@ class Tools extends ToolsCommon
         $uf = $this->validKeyByUF($chave);
         $xJust = Strings::replaceUnacceptableCharacters(substr(trim($xJust), 0, 255));
         $nSeqEvento = 1;
-        $tagAdic = "<nProt>$nProt</nProt><xJust>$xJust</xJust>";
-        return $this->sefazEvento($uf, $chave, self::EVT_CANCELA, $nSeqEvento, $tagAdic, $dhEvento, $lote);
+        $nProt = str_pad($nProt, 16, "0", STR_PAD_LEFT);
+        $ev = $this->tpEv(self::EVT_CANCELA);
+        $tagAdic = "<evCancNFCom>"
+            . "<descEvento>$ev->desc</descEvento>"
+            . "<nProt>$nProt</nProt>"
+            . "<xJust>$xJust</xJust>"
+            . "</evCancNFCom>";
+        return $this->sefazEvento($uf, $chave, self::EVT_CANCELA, $nSeqEvento, $tagAdic, $dhEvento);
     }
 
     /**
@@ -227,8 +234,7 @@ class Tools extends ToolsCommon
         int $tpEvento,
         int $nSeqEvento = 1,
         string $tagAdic = '',
-        ?\DateTimeInterface $dhEvento = null,
-        ?string $lote = null
+        ?\DateTimeInterface $dhEvento = null
     ): string {
         $eventos = [
             self::EVT_CANCELA => ['versao' => '1.00', 'nome' => 'evCancNFCom']
@@ -242,8 +248,6 @@ class Tools extends ToolsCommon
         $servico = 'NFComRecepcaoEvento';
         $this->checkContingencyForWebServices($servico);
         $this->servico($servico, $uf, $this->tpAmb, $ignore);
-        $ev = $this->tpEv($tpEvento);
-        $descEvento = $ev->desc;
         $cnpj = $this->config->cnpj ?? '';
         $dt = new \DateTime(date("Y-m-d H:i:sP"), new \DateTimeZone($this->timezone));
         $dt->setTimezone(new \DateTimeZone($this->timezone));
@@ -251,14 +255,9 @@ class Tools extends ToolsCommon
         if ($dhEvento != null) {
             $dhEventoString = $dhEvento->format('Y-m-d\TH:i:sP');
         }
-        $sSeqEvento = str_pad((string)$nSeqEvento, 2, "0", STR_PAD_LEFT);
+        $sSeqEvento = str_pad((string)$nSeqEvento, 3, "0", STR_PAD_LEFT);
         $eventId = "ID" . $tpEvento . $chave . $sSeqEvento;
-        //NT 2024.002 versão 1.00 - Maio 2024, comentário P08 elemento cOrgao
-        if (in_array($tpEvento, [self::EVT_CONCILIACAO, self::EVT_CANCELA_CONCILIACAO]) && $uf === 'SVRS') {
-            $cOrgao = 92;
-        } else {
-            $cOrgao = UFList::getCodeByUF($uf);
-        }
+        $cOrgao = UFList::getCodeByUF($uf);
         $request = "<eventoNFCom xmlns=\"$this->urlPortal\" versao=\"$this->urlVersion\">"
             . "<infEvento Id=\"$eventId\">"
             . "<cOrgao>$cOrgao</cOrgao>"
@@ -272,9 +271,7 @@ class Tools extends ToolsCommon
             . "<dhEvento>$dhEventoString</dhEvento>"
             . "<tpEvento>$tpEvento</tpEvento>"
             . "<nSeqEvento>$nSeqEvento</nSeqEvento>"
-            . "<verEvento>$verEvento</verEvento>"
-            . "<detEvento versao=\"$verEvento\">"
-            . "<descEvento>$descEvento</descEvento>"
+            . "<detEvento versaoEvento=\"$verEvento\">"
             . "$tagAdic"
             . "</detEvento>"
             . "</infEvento>"
@@ -289,13 +286,6 @@ class Tools extends ToolsCommon
             $this->canonical
         );
         $request = Strings::clearXmlString($request, true);
-        if ($lote == null) {
-            $lote = $dt->format('YmdHis') . random_int(0, 9);
-        }
-        $request = "<eventoNFCom xmlns=\"$this->urlPortal\" versao=\"$this->urlVersion\">"
-            . "<idLote>$lote</idLote>"
-            . $request
-            . "</eventoNFCom>";
         if (!empty($eventos[$tpEvento])) {
             $evt = $eventos[$tpEvento];
             $this->isValid($evt['versao'], $request, $evt['nome']);
@@ -307,5 +297,33 @@ class Tools extends ToolsCommon
         $body = "<nfcomDadosMsg xmlns=\"$this->urlNamespace\">$request</nfcomDadosMsg>";
         $this->lastResponse = $this->sendRequest($body, $parameters);
         return $this->lastResponse;
+    }
+
+    /**
+     * Returns alias and description event from event code.
+     * @param int $tpEvento
+     * @return \stdClass
+     * @throws \RuntimeException
+     */
+    private function tpEv(int $tpEvento): \stdClass
+    {
+        $std = new \stdClass();
+        $std->alias = '';
+        $std->desc = '';
+        switch ($tpEvento) {
+            case self::EVT_CANCELA:
+                $std->alias = 'CancNFCom';
+                $std->desc = 'Cancelamento';
+                break;
+            case self::EVT_CANCELASUBSTITUICAO:
+                $std->alias = 'CancNFCom';
+                $std->desc = 'Cancelamento por substituicao';
+                break;
+            default:
+                $msg = "O código do tipo de evento informado não corresponde a "
+                    . "nenhum evento estabelecido.";
+                throw new RuntimeException($msg);
+        }
+        return $std;
     }
 }
