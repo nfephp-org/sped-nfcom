@@ -25,7 +25,7 @@ class Complements
         }
         $st = new Standardize();
         $key = ucfirst($st->whichIs($request));
-        if ($key !== 'NFCom' && $key !== 'EnvEvento' && $key !== 'InutNFCom') {
+        if ($key !== 'NFCom' && $key !== 'EnvEvento' && $key !== 'InutNFCom' && $key != 'EventoNFCom') {
             //wrong document, this document is not able to recieve a protocol
             throw DocumentsException::wrongDocument(0, $key);
         }
@@ -318,6 +318,41 @@ class Complements
                 5,
                 "Os numeros de lote dos documentos são diferentes."
             );
+        }
+        return self::join(
+            $ev->saveXML($event),
+            $ret->saveXML($retEv),
+            'procEventoNFCom',
+            $versao
+        );
+    }
+
+    protected static function addEventoNFComProtocol($request, $response)
+    {
+        $ev = new \DOMDocument('1.0', 'UTF-8');
+        $ev->preserveWhiteSpace = false;
+        $ev->formatOutput = false;
+        $ev->loadXML($request);
+        //extrai tag evento do xml origem (solicitação)
+        $event = $ev->getElementsByTagName('eventoNFCom')->item(0);
+        $versao = $event->getAttribute('versao');
+
+        $ret = new \DOMDocument('1.0', 'UTF-8');
+        $ret->preserveWhiteSpace = false;
+        $ret->formatOutput = false;
+        $ret->loadXML($response);
+
+        //extrai a rag retEvento da resposta (retorno da SEFAZ)
+        $retEv = $ret->getElementsByTagName('retEventoNFCom')->item(0);
+        $cStat  = $retEv->getElementsByTagName('cStat')->item(0)->nodeValue;
+        $xMotivo = $retEv->getElementsByTagName('xMotivo')->item(0)->nodeValue;
+        $tpEvento = $retEv->getElementsByTagName('tpEvento')->item(0)->nodeValue;
+        $cStatValids = ['135', '136'];
+        if ($tpEvento == Tools::EVT_CANCELA) {
+            $cStatValids[] = '155';
+        }
+        if (!in_array($cStat, $cStatValids)) {
+            throw DocumentsException::wrongDocument(4, "[$cStat] $xMotivo");
         }
         return self::join(
             $ev->saveXML($event),
