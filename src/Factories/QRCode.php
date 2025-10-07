@@ -1,0 +1,165 @@
+<?php
+
+/**
+ * Class QRCode create a string to make a QRCode string to NFCom
+ *
+ * @category  NFePHP
+ * @package   NFePHP\NFCom\Factories\QRCode
+ * @copyright NFePHP Copyright (c) 2008-2019
+ * @license   http://www.gnu.org/licenses/lgpl.txt LGPLv3+
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @license   http://www.gnu.org/licenses/gpl.txt GPLv3+
+ * @author    Roberto L. Machado <linux.rlm at gmail dot com>
+ * @link      http://github.com/nfephp-org/sped-nfcom for the canonical source repository
+ */
+
+namespace NFePHP\NFCom\Factories;
+
+use DOMDocument;
+use NFePHP\NFCom\Exception\DocumentsException;
+
+class QRCode
+{
+    /**
+     * putQRTag
+     * Mount URI for QRCode and create three XML tags in signed xml
+     * @param DOMDocument $dom NFe
+     * @param string $token CSC number
+     * @param string $idToken CSC identification
+     * @param string $versao version of field
+     * @param string $urlqr URL for search by QRCode
+     * @param string $urichave URL for search by chave layout 1.00 only
+     * @throws DocumentsException
+     */
+    public static function putQRTag(
+        \DOMDocument $dom,
+        string $token,
+        string $idToken,
+        string $versao,
+        string $urlqr,
+        string $urichave = ''
+    ): string {
+        $token = trim($token);
+        $idToken = trim($idToken);
+        $versao = trim($versao);
+        $urlqr = trim($urlqr);
+        $urichave = trim($urichave);
+        if (empty($token)) {
+            throw DocumentsException::wrongDocument(9); //Falta o CSC no config.json
+        }
+        if (empty($idToken)) {
+            throw DocumentsException::wrongDocument(10); //Falta o CSCId no config.json
+        }
+        if (empty($urlqr)) {
+            throw DocumentsException::wrongDocument(11); //Falta a URL do serviço NfeConsultaQR
+        }
+        if (empty($versao)) {
+            $versao = '200';
+        }
+        $nfe = $dom->getElementsByTagName('NFCom')->item(0);
+        $infNFe = $dom->getElementsByTagName('infNFCom')->item(0);
+        $layoutver = $infNFe->getAttribute('versao');
+        $ide = $dom->getElementsByTagName('ide')->item(0);
+        $dest = $dom->getElementsByTagName('dest')->item(0);
+        $icmsTot = $dom->getElementsByTagName('ICMSTot')->item(0);
+        $signedInfo = $dom->getElementsByTagName('SignedInfo')->item(0);
+        $chNFe = preg_replace('/[^0-9]/', '', $infNFe->getAttribute("Id"));
+        $tpAmb = $ide->getElementsByTagName('tpAmb')->item(0)->nodeValue;
+        $dhEmi = $ide->getElementsByTagName('dhEmi')->item(0)->nodeValue;
+        $tpEmis = $ide->getElementsByTagName('tpEmis')->item(0)->nodeValue;
+        $cDest = '';
+        if (!empty($dest)) {
+            $cDest = (string) !empty($dest->getElementsByTagName('CNPJ')->item(0)->nodeValue)
+                ? $dest->getElementsByTagName('CNPJ')->item(0)->nodeValue
+                : '';
+            if (empty($cDest)) {
+                $cDest = (string) !empty($dest->getElementsByTagName('CPF')->item(0)->nodeValue)
+                    ? $dest->getElementsByTagName('CPF')->item(0)->nodeValue
+                    : '';
+                if (empty($cDest)) {
+                    $cDest = (string) $dest->getElementsByTagName('idEstrangeiro')->item(0)->nodeValue;
+                }
+            }
+        }
+        $vNF = $icmsTot->getElementsByTagName('vNF')->item(0)->nodeValue;
+        $vICMS = $icmsTot->getElementsByTagName('vICMS')->item(0)->nodeValue;
+        $digVal = $signedInfo->getElementsByTagName('DigestValue')->item(0)->nodeValue;
+        $qrMethod = "get$versao";
+        $qrcode = self::$qrMethod(
+            $chNFe,
+            $urlqr,
+            $tpAmb,
+            $dhEmi,
+            $vNF,
+            $vICMS,
+            $digVal,
+            $token,
+            $idToken,
+            $versao,
+            $tpEmis,
+            $cDest
+        );
+        $infNFComSupl = $dom->createElement("infNFComSupl");
+        $infNFComSupl->appendChild($dom->createElement('qrCodNFCom', $qrcode));
+        //$nodeqr = $infNFComSupl->appendChild($dom->createElement('qrCodNFCom'));
+        //$nodeqr->appendChild($dom->createCDATASection($qrcode));
+        $signature = $dom->getElementsByTagName('Signature')->item(0);
+        $nfe->insertBefore($infNFComSupl, $signature);
+        $dom->formatOutput = false;
+        return $dom->saveXML();
+    }
+
+    /**
+     * Return a QRCode version 2 string to be used in NFCe layout 4.00
+     */
+    protected static function get200(
+        string $chNFe,
+        string $url,
+        string $tpAmb,
+        string $dhEmi,
+        string $vNF,
+        string $vICMS,
+        string $digVal,
+        string $token,
+        string $idToken,
+        int $versao,
+        int $tpEmis,
+        string $cDest
+    ): string {
+        $ver = $versao / 100;
+        $cscId = (int) $idToken;
+        $csc = $token;
+        if (strpos($url, '?p=') === false) {
+            $url = $url . '?p=';
+        }
+        if ($tpEmis != 9) {
+            //emissão on-line
+            $seq = "$chNFe|$ver|$tpAmb|$cscId";
+            $hash = strtoupper(sha1($seq . $csc));
+            return "$url$seq|$hash";
+        }
+        //emissão off-line
+        $dt = new \DateTime($dhEmi);
+        $dia = $dt->format('d');
+        $valor = number_format((float)$vNF, 2, '.', '');
+        $digHex = self::str2Hex($digVal);
+        $seq = "$chNFe|$ver|$tpAmb|$dia|$valor|$digHex|$cscId";
+        $hash = strtoupper(sha1($seq . $csc));
+        return "$url$seq|$hash";
+    }
+
+    /**
+     * Convert string to hexadecimal ASCII equivalent
+     */
+    protected static function str2Hex(string $str): string
+    {
+        $hex = "";
+        $iCount = 0;
+        $tot = strlen($str);
+        do {
+            $hex .= sprintf("%02x", ord($str[$iCount]));
+            $iCount++;
+        } while ($iCount < $tot);
+        return $hex;
+    }
+}
