@@ -1675,6 +1675,7 @@ class Make
             'item',
             'CST',
             'cClassTrib',
+            'indDoacao',
         ];
         $std = $this->equilizeParameters($std, $possible);
 
@@ -1692,7 +1693,14 @@ class Make
             'cClassTrib',
             $std->cClassTrib,
             true,
-            $identificador . "[item $std->item] Código da Classificação Tributária do IBS/CBS "
+            $identificador . "[item $std->item] Código da Classificação Tributária do IBS/CBS"
+        );
+        $this->dom->addChild(
+            $IBSCBS,
+            'indDoacao',
+            $std->indDoacao,
+            true,
+            $identificador . "[item $std->item] Indica se a operação é de doação"
         );
         $this->aIBSCBS[$std->item] = $IBSCBS;
         return $IBSCBS;
@@ -2546,6 +2554,7 @@ class Make
             'vDesc',
             'vOutro',
             'vNF',
+            'vTotDFe',
         ];
         $std = $this->equilizeParameters($std, $possible);
 
@@ -2606,6 +2615,13 @@ class Make
             $this->conditionalNumberFormatting($std->vNF),
             true,
             "Valor Total da NFCom"
+        );
+        $this->dom->addChild(
+            $this->total,
+            "vTotDFe",
+            $this->conditionalNumberFormatting($std->vTotDFe),
+            true,
+            "Valor total do documento fiscal (vNF + total do IBS + total da CBS)"
         );
         return $this->total;
     }
@@ -2684,7 +2700,7 @@ class Make
         }
 
         if (empty($this->total)) {
-            throw new RuntimeException('A TAG total deve ser criada antes do ICMSTot do mesmo.');
+            throw new RuntimeException('A TAG total deve ser criada antes do vRetTribTot do mesmo.');
         }
 
         $vRetTribTot = $this->dom->createElement("vRetTribTot");
@@ -2720,6 +2736,233 @@ class Make
         $node = $this->total->getElementsByTagName("vDesc")->item(0);
         $this->total->insertBefore($vRetTribTot, $node);
         return $vRetTribTot;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagIBSCBSTot(stdClass $std)
+    {
+        $possible = [
+            'vBCIBSCBS',
+        ];
+        if (isset($std)) {
+            $std = $this->equilizeParameters($std, $possible);
+        }
+
+        if (empty($this->total)) {
+            throw new RuntimeException('A TAG total deve ser criada antes do IBSCBSTot do mesmo.');
+        }
+
+        $IBSCBSTot = $this->dom->createElement("IBSCBSTot");
+        $this->dom->addChild(
+            $IBSCBSTot,
+            "vBCIBSCBS",
+            $this->conditionalNumberFormatting($std->vBCIBSCBS),
+            true,
+            "Total Base de Calculo"
+        );
+
+        $node = $this->total->getElementsByTagName("vTotDFe")->item(0);
+        $this->total->insertBefore($IBSCBSTot, $node);
+        return $IBSCBSTot;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagIBSTot(stdClass $std)
+    {
+        $possible = [
+            'vIBS',
+        ];
+        $std = $this->equilizeParameters($std, $possible);
+
+        $identificador = '<gIBS> - ';
+        $gIBS = $this->dom->createElement("gIBS");
+        $this->dom->addChild(
+            $gIBS,
+            "vIBS",
+            $std->vIBS,
+            true,
+            $identificador . "	Valor total do IBS"
+        );
+
+        $node = $this->total->getElementsByTagName('IBSCBSTot')->item(0);
+        $this->dom->appChild($node, $gIBS, 'Falta tag "IBSCBSTot"');
+        return $gIBS;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagIBSUFTot(stdClass $std)
+    {
+        $possible = [
+            'vDif',
+            'vDevTrib',
+            'vIBSUF',
+        ];
+        $std = $this->equilizeParameters($std, $possible);
+
+        $identificador = '<gIBSUF> - ';
+        $gIBSUF = $this->dom->createElement("gIBSUF");
+        $this->dom->addChild(
+            $gIBSUF,
+            "vDif",
+            $std->vDif,
+            true,
+            $identificador . "	Total do Diferimento"
+        );
+        $this->dom->addChild(
+            $gIBSUF,
+            "vDevTrib",
+            $std->vDevTrib,
+            true,
+            $identificador . "	Total de devoluções de tributos"
+        );
+        $this->dom->addChild(
+            $gIBSUF,
+            "vIBSUF",
+            $std->vIBSUF,
+            true,
+            $identificador . "	Valor total do IBS Estadual"
+        );
+
+        $node = $this->total->getElementsByTagName('gIBS')->item(0);
+        $firstChild = $node->firstChild;
+        if ($firstChild) {
+            $node->insertBefore($gIBSUF, $firstChild);
+        } else {
+            $this->dom->appChild($node, $gIBSUF, 'Falta tag "gIBS"');
+        }
+        return $gIBSUF;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagIBMunTot(stdClass $std)
+    {
+        $possible = [
+            'vDif',
+            'vDevTrib',
+            'vIBSMun',
+        ];
+        $std = $this->equilizeParameters($std, $possible);
+
+        $identificador = '<gIBSMun> - ';
+        $gIBSMun = $this->dom->createElement("gIBSMun");
+        $this->dom->addChild(
+            $gIBSMun,
+            "vDif",
+            $std->vDif,
+            true,
+            $identificador . "	Total do Diferimento"
+        );
+        $this->dom->addChild(
+            $gIBSMun,
+            "vDevTrib",
+            $std->vDevTrib,
+            true,
+            $identificador . "	Total de devoluções de tributos"
+        );
+        $this->dom->addChild(
+            $gIBSMun,
+            "vIBSMun",
+            $std->vIBSMun,
+            true,
+            $identificador . "	Valor total do IBS Municipal"
+        );
+
+        $node = $this->total->getElementsByTagName('gIBS')->item(0);
+        $firstChild = $node->firstChild;
+        if ($firstChild) {
+            $node->insertBefore($gIBSMun, $firstChild);
+        } else {
+            $this->dom->appChild($node, $gIBSMun, 'Falta tag "gIBS"');
+        }
+        return $gIBSMun;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagCBSTot(stdClass $std)
+    {
+        $possible = [
+            'vDif',
+            'vDevTrib',
+            'vCBS',
+        ];
+        $std = $this->equilizeParameters($std, $possible);
+
+        $identificador = '<gCBS> - ';
+        $gCBS = $this->dom->createElement("gCBS");
+        $this->dom->addChild(
+            $gCBS,
+            "vDif",
+            $std->vDif,
+            true,
+            $identificador . "	Total do Diferimento"
+        );
+        $this->dom->addChild(
+            $gCBS,
+            "vDevTrib",
+            $std->vDevTrib,
+            true,
+            $identificador . "	Total de devoluções de tributos"
+        );
+        $this->dom->addChild(
+            $gCBS,
+            "vCBS",
+            $std->vCBS,
+            true,
+            $identificador . "	Valor total da CBS"
+        );
+
+        $node = $this->total->getElementsByTagName('IBSCBSTot')->item(0);
+        $this->dom->appChild($node, $gCBS, 'Falta tag "IBSCBSTot"');
+        return $gCBS;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagEstornoCred(stdClass $std)
+    {
+        $possible = [
+            'vIBSEstCred',
+            'vCBSEstCred',
+        ];
+        $std = $this->equilizeParameters($std, $possible);
+
+        $identificador = '<gEstornoCred> - ';
+        $gEstornoCred = $this->dom->createElement("gEstornoCred");
+        $this->dom->addChild(
+            $gEstornoCred,
+            "vIBSEstCred",
+            $std->vIBSEstCred,
+            true,
+            $identificador . "	Valor total do IBS estornado"
+        );
+        $this->dom->addChild(
+            $gEstornoCred,
+            "vCBSEstCred",
+            $std->vCBSEstCred,
+            true,
+            $identificador . "	Valor total da CBS estornada"
+        );
+
+        $node = $this->total->getElementsByTagName('IBSCBSTot')->item(0);
+        $this->dom->appChild($node, $gEstornoCred, 'Falta tag "IBSCBSTot"');
+        return $gEstornoCred;
     }
 
     /**
