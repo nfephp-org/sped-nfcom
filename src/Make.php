@@ -2620,7 +2620,7 @@ class Make
             $this->total,
             "vTotDFe",
             $this->conditionalNumberFormatting($std->vTotDFe),
-            true,
+            false,
             "Valor total do documento fiscal (vNF + total do IBS + total da CBS)"
         );
         return $this->total;
