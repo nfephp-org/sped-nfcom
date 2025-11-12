@@ -37,6 +37,7 @@ class Make
     protected $aProd = [];
     protected $aICMS = [];
     protected $aICMSSN = [];
+    protected $aIndSemCST = [];
     protected $aICMSUFDest = [];
     protected $aPIS = [];
     protected $aCOFINS = [];
@@ -976,8 +977,7 @@ class Make
             'vOutro',
             'vProd',
             'dExpiracao',
-            'indDevolucao',
-            'indSemCST',
+            'indDevolucao'
         ];
         $std = $this->equilizeParameters($std, $possible);
 
@@ -1073,13 +1073,6 @@ class Make
             $std->indDevolucao,
             false,
             $identificador . "[item $std->item] Indicador de devolução do valor do item"
-        );
-        $this->dom->addChild(
-            $prod,
-            "indSemCST",
-            $std->indSemCST,
-            false,
-            $identificador . "[item $std->item] Sem Situação Tributária para o ICMS"
         );
         $this->aProd[$std->item] = $prod;
         return $prod;
@@ -1351,6 +1344,25 @@ class Make
         );
         $this->aICMSSN[$std->item] = $icmsSN;
         return $icmsSN;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagIndSemCST(stdClass $std)
+    {
+        $possible = [
+            'item',
+            'indSemCST',
+        ];
+        $std = $this->equilizeParameters($std, $possible);
+
+        $indSemCST = $this->dom->createElement("indSemCST", $std->indSemCST);
+
+        $this->aIndSemCST[$std->item] = $indSemCST;
+
+        return $indSemCST;
     }
 
     /**
@@ -3430,6 +3442,10 @@ class Make
                 foreach ($this->aICMSUFDest[$nItem] as $aICMSUFDest) {
                     $this->dom->appChild($imposto, $aICMSUFDest, "Inclusão do node aICMSUFDest");
                 }
+            }
+            if (!empty($this->aindSemCST[$nItem])) {
+                $child = $this->aindSemCST[$nItem];
+                $this->dom->appChild($imposto, $child, "Inclusão do node ICMSSN");
             }
             if (!empty($this->aPIS[$nItem])) {
                 $child = $this->aPIS[$nItem];
