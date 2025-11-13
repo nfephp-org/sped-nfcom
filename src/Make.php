@@ -37,8 +37,8 @@ class Make
     protected $aProd = [];
     protected $aICMS = [];
     protected $aICMSSN = [];
-    protected $aIndSemCST = [];
     protected $aICMSUFDest = [];
+    protected $aIndSemCST;
     protected $aPIS = [];
     protected $aCOFINS = [];
     protected $aFUST = [];
@@ -124,7 +124,7 @@ class Make
         if (empty($std->cDV)) {
             $std->cDV = 0;
         }
-         $std->cNF = str_pad($std->cNF, 7, '0', STR_PAD_LEFT);
+        $std->cNF = str_pad($std->cNF, 7, '0', STR_PAD_LEFT);
         if (intval($std->cNF) == intval($std->nNF)) {
             throw new InvalidArgumentException("O valor [{$std->cNF}] não é " . " aceitável para cNF,
               não pode ser igual ao de nNF, vide NT2019.001");
@@ -977,7 +977,7 @@ class Make
             'vOutro',
             'vProd',
             'dExpiracao',
-            'indDevolucao'
+            'indDevolucao',
         ];
         $std = $this->equilizeParameters($std, $possible);
 
@@ -1323,7 +1323,8 @@ class Make
         $possible = [
             'item',
             'CST',
-            'indSN'
+            'indSN',
+            'indSemCST',
         ];
         $std = $this->equilizeParameters($std, $possible);
 
@@ -1342,27 +1343,15 @@ class Make
             true,
             "[item $std->item] Indica se o contribuinte é Simples Nacional 1=Sim"
         );
+        $this->dom->addChild(
+            $icmsSN,
+            'indSemCST',
+            $std->indSemCST,
+            true,
+            "[item $std->item] Sem Situação Tributária para o ICMS"
+        );
         $this->aICMSSN[$std->item] = $icmsSN;
         return $icmsSN;
-    }
-
-    /**
-     * @param stdClass $std
-     * @return \DOMElement|false
-     */
-    public function tagIndSemCST(stdClass $std)
-    {
-        $possible = [
-            'item',
-            'indSemCST',
-        ];
-        $std = $this->equilizeParameters($std, $possible);
-
-        $indSemCST = $this->dom->createElement("indSemCST", $std->indSemCST);
-
-        $this->aIndSemCST[$std->item] = $indSemCST;
-
-        return $indSemCST;
     }
 
     /**
@@ -1443,6 +1432,25 @@ class Make
         );
         $this->aICMSUFDest[$std->item][] = $ICMSUFDest;
         return $ICMSUFDest;
+    }
+
+    /**
+     * @param stdClass $std
+     * @return \DOMElement|false
+     */
+    public function tagIndSemCST(\stdClass $std)
+    {
+        $possible = [
+            'item',
+            'indSemCST',
+        ];
+        $std = $this->equilizeParameters($std, $possible);
+
+        $indSemCST = $this->dom->createElement("indSemCST", $std->indSemCST);
+
+        $this->aIndSemCST[$std->item] = $indSemCST;
+
+        return $indSemCST;
     }
 
     /**
@@ -2632,7 +2640,7 @@ class Make
             $this->total,
             "vTotDFe",
             $this->conditionalNumberFormatting($std->vTotDFe),
-            true,
+            false,
             "Valor total do documento fiscal (vNF + total do IBS + total da CBS)"
         );
         return $this->total;
@@ -3430,23 +3438,25 @@ class Make
 
             // IMPOSTO
             $imposto = $this->dom->createElement("imposto");
-            if (!empty($this->aICMS[$nItem])) {
-                $child = $this->aICMS[$nItem];
-                $this->dom->appChild($imposto, $child, "Inclusão do node ICMS");
-            }
-            if (!empty($this->aICMSSN[$nItem])) {
-                $child = $this->aICMSSN[$nItem];
-                $this->dom->appChild($imposto, $child, "Inclusão do node ICMSSN");
-            }
-            if (!empty($this->aICMSUFDest[$nItem])) {
-                foreach ($this->aICMSUFDest[$nItem] as $aICMSUFDest) {
-                    $this->dom->appChild($imposto, $aICMSUFDest, "Inclusão do node aICMSUFDest");
+            if (!empty($this->aIndSemCST[$nItem])) {
+                $child = $this->aIndSemCST[$nItem];
+                $this->dom->appChild($imposto, $child, "Inclusão do node indSemCST");
+            } else {
+                if (!empty($this->aICMS[$nItem])) {
+                    $child = $this->aICMS[$nItem];
+                    $this->dom->appChild($imposto, $child, "Inclusão do node ICMS");
+                }
+                if (!empty($this->aICMSSN[$nItem])) {
+                    $child = $this->aICMSSN[$nItem];
+                    $this->dom->appChild($imposto, $child, "Inclusão do node ICMSSN");
+                }
+                if (!empty($this->aICMSUFDest[$nItem])) {
+                    foreach ($this->aICMSUFDest[$nItem] as $aICMSUFDest) {
+                        $this->dom->appChild($imposto, $aICMSUFDest, "Inclusão do node aICMSUFDest");
+                    }
                 }
             }
-            if (!empty($this->aindSemCST[$nItem])) {
-                $child = $this->aindSemCST[$nItem];
-                $this->dom->appChild($imposto, $child, "Inclusão do node ICMSSN");
-            }
+
             if (!empty($this->aPIS[$nItem])) {
                 $child = $this->aPIS[$nItem];
                 $this->dom->appChild($imposto, $child, "Inclusão do node PIS");
