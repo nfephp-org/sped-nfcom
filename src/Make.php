@@ -1323,8 +1323,7 @@ class Make
         $possible = [
             'item',
             'CST',
-            'indSN',
-            'indSemCST',
+            'indSN'
         ];
         $std = $this->equilizeParameters($std, $possible);
 
@@ -1342,14 +1341,7 @@ class Make
             $std->CSOSN,
             true,
             "[item $std->item] Indica se o contribuinte é Simples Nacional 1=Sim"
-        );
-        $this->dom->addChild(
-            $icmsSN,
-            'indSemCST',
-            $std->indSemCST,
-            true,
-            "[item $std->item] Sem Situação Tributária para o ICMS"
-        );
+        );       
         $this->aICMSSN[$std->item] = $icmsSN;
         return $icmsSN;
     }
