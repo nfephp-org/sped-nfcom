@@ -46,7 +46,6 @@ class Make
     protected $aRetTrib = [];
     protected $aIBSCBS = [];
     protected $aGIBSCBS = [];
-    protected $aGIBS = [];
     protected $aGIBSUF = [];
     protected $aGIBSMun = [];
     protected $aGCBS = [];
@@ -1744,31 +1743,6 @@ class Make
         return $gIBSCBS;
     }
 
-    /**
-     * @param stdClass $std
-     * @return \DOMElement|false
-     */
-    public function tagGIBS(stdClass $std)
-    {
-        $possible = [
-            'item',
-            'vIBS',
-        ];
-        $std = $this->equilizeParameters($std, $possible);
-
-        $identificador = '<gIBS> - ';
-        $gIBS = $this->dom->createElement("gIBS");
-        $this->dom->addChild(
-            $gIBS,
-            "vIBS",
-            $std->vIBS,
-            true,
-            $identificador . "[item $std->item] Valor da IBS"
-        );
-        $this->aGIBS[$std->item] = $gIBS;
-        return $gIBS;
-    }
-    
     /**
      * @param stdClass $std
      * @return \DOMElement|false
@@ -3501,12 +3475,7 @@ class Make
                 if (!empty($this->aGIBSCBS[$nItem])) {
                     $aGIBSCBS = $this->aGIBSCBS[$nItem];
                     $this->dom->appChild($IBSCBS, $aGIBSCBS, "Inclusão do node gIBSCBS");
-                    
-					if (!empty($this->aGIBS[$nItem])) {
-                        $child = $this->aGIBS[$nItem];
-                        $this->dom->appChild($aGIBSCBS, $child, "Inclusão do node gIBS");
-                    }
-                    
+
                     if (!empty($this->aGIBSUF[$nItem])) {
                         $child = $this->aGIBSUF[$nItem];
                         $this->dom->appChild($aGIBSCBS, $child, "Inclusão do node gIBSUF");
