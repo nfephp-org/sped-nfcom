@@ -43,8 +43,8 @@ class Tools extends ToolsCommon
         $servico = 'NFComRecepcao';
         $this->checkContingencyForWebServices($servico);
         if ($this->contingency->type != '') {
-            // Em modo de contingencia esses XMLs dever„o ser modificados e re-assinados e retornados
-            // no parametro $xmls para serem armazenados pelo aplicativo pois ser„o alterados.
+            // Em modo de contingencia esses XMLs dever√£o ser modificados e re-assinados e retornados
+            // no parametro $xmls para serem armazenados pelo aplicativo pois ser√£o alterados.
             $this->correctNFComForContingencyMode($Xml);
         }
 
@@ -87,7 +87,7 @@ class Tools extends ToolsCommon
         if (empty($uf) || empty($filter)) {
             throw new InvalidArgumentException('Sigla UF esta vazia ou CNPJ+IE+CPF vazios!');
         }
-        //carrega serviÁo
+        //carrega servi√ßo
         $servico = 'NfeConsultaCadastro';
         $this->checkContingencyForWebServices($servico);
         $this->servico($servico, $uf, $this->tpAmb, true);
@@ -200,7 +200,7 @@ class Tools extends ToolsCommon
         if (empty($tpAmb)) {
             $tpAmb = $this->tpAmb;
         }
-        //carrega serviÁo
+        //carrega servi√ßo
         $servico = 'NFComConsulta';
         $this->checkContingencyForWebServices($servico);
         $this->servico($servico, $uf, $tpAmb);
@@ -286,12 +286,23 @@ class Tools extends ToolsCommon
             $this->canonical
         );
         $request = Strings::clearXmlString($request, true);
-        if (!empty($eventos[$tpEvento])) {
-            $evt = $eventos[$tpEvento];
-            $this->isValid($evt['versao'], $request, $evt['nome']);
-        } else {
-            $this->isValid($this->urlVersion, $request, 'eventoNFCom');
+        //valida√ß√£o por tagAdicional
+        if (!empty($eventos[$tpEvento]) && !empty($tagAdic)) {
+            $evt = $eventos[$tpEvento];            
+            $tagParaValidar = $tagAdic;
+            //valida√ß√£o da tag "evCancNFCom", para outras tags adicionais, precisa implementar
+            if (strpos($tagParaValidar, 'xmlns') === false) {
+                $tagParaValidar = str_replace(
+                    '<evCancNFCom', 
+                    '<evCancNFCom xmlns="http://www.portalfiscal.inf.br/nfcom"', 
+                    $tagParaValidar
+                );
+            }
+            $this->isValid($evt['versao'], $tagParaValidar, $evt['nome']);
         }
+        
+        $this->isValid($this->urlVersion, $request, 'eventoNFCom');
+        
         $this->lastRequest = $request;
         $parameters = ['nfcomDadosMsg' => $request];
         $body = "<nfcomDadosMsg xmlns=\"$this->urlNamespace\">$request</nfcomDadosMsg>";
@@ -320,7 +331,7 @@ class Tools extends ToolsCommon
                 $std->desc = 'Cancelamento por substituicao';
                 break;
             default:
-                $msg = "O cÛdigo do tipo de evento informado n„o corresponde a "
+                $msg = "O c√≥digo do tipo de evento informado n√£o corresponde a "
                     . "nenhum evento estabelecido.";
                 throw new RuntimeException($msg);
         }
